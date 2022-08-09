@@ -23,6 +23,7 @@ import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 
 import com.asmaamir.mlkitdemo.R;
+import com.asmaamir.mlkitdemo.ToastUtils;
 
 public class RealTimeFaceDetectionActivity extends AppCompatActivity {
     public static final int REQUEST_CODE_PERMISSION = 101;
@@ -87,6 +88,8 @@ public class RealTimeFaceDetectionActivity extends AppCompatActivity {
                 .setTargetResolution(new Size(tv.getWidth(), tv.getHeight()))
                 .setLensFacing(lens)
                 .build();
+
+        ToastUtils.init(getApplication());
 
         ImageAnalysis imageAnalysis = new ImageAnalysis(iac);
         imageAnalysis.setAnalyzer(Runnable::run,

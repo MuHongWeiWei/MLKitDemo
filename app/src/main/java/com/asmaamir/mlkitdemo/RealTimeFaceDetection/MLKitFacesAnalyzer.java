@@ -13,6 +13,7 @@ import androidx.camera.core.CameraX;
 import androidx.camera.core.ImageAnalysis;
 import androidx.camera.core.ImageProxy;
 
+import com.asmaamir.mlkitdemo.ToastUtils;
 import com.google.firebase.ml.vision.FirebaseVision;
 import com.google.firebase.ml.vision.common.FirebaseVisionImage;
 import com.google.firebase.ml.vision.common.FirebaseVisionImageMetadata;
@@ -22,7 +23,14 @@ import com.google.firebase.ml.vision.face.FirebaseVisionFaceContour;
 import com.google.firebase.ml.vision.face.FirebaseVisionFaceDetector;
 import com.google.firebase.ml.vision.face.FirebaseVisionFaceDetectorOptions;
 
+import java.util.ArrayList;
 import java.util.List;
+
+import static com.google.firebase.ml.vision.face.FirebaseVisionFaceContour.FACE;
+import static com.google.firebase.ml.vision.face.FirebaseVisionFaceContour.LOWER_LIP_BOTTOM;
+import static com.google.firebase.ml.vision.face.FirebaseVisionFaceContour.LOWER_LIP_TOP;
+import static com.google.firebase.ml.vision.face.FirebaseVisionFaceContour.NOSE_BRIDGE;
+import static com.google.firebase.ml.vision.face.FirebaseVisionFaceContour.UPPER_LIP_BOTTOM;
 
 public class MLKitFacesAnalyzer implements ImageAnalysis.Analyzer {
     private static final String TAG = "MLKitFacesAnalyzer";
@@ -36,6 +44,24 @@ public class MLKitFacesAnalyzer implements ImageAnalysis.Analyzer {
     private float heightScaleFactor = 1.0f;
     private FirebaseVisionImage fbImage;
     private CameraX.LensFacing lens;
+    //搖頭
+    float rightFace = 0;
+    float leftFace = 0;
+    float nose = 0;
+    float turnRight = 0;
+    float turnLeft = 0;
+    //張嘴
+    float upBottomLip = 0;
+    float LowTopLip = 0;
+    //點頭
+    float midFace = 0;
+    float topFace = 0;
+    float bottomFace = 0;
+    float turnTop = 0;
+    float turnBottom = 0;
+
+    List<Float> myList = new ArrayList<>();
+
 
     MLKitFacesAnalyzer(TextureView tv, ImageView iv, CameraX.LensFacing lens) {
         this.tv = tv;
@@ -60,12 +86,12 @@ public class MLKitFacesAnalyzer implements ImageAnalysis.Analyzer {
         bitmap = Bitmap.createBitmap(tv.getWidth(), tv.getHeight(), Bitmap.Config.ARGB_8888);
         canvas = new Canvas(bitmap);
         dotPaint = new Paint();
-        dotPaint.setColor(Color.RED);
+        dotPaint.setColor(Color.YELLOW);
         dotPaint.setStyle(Paint.Style.FILL);
         dotPaint.setStrokeWidth(2f);
         dotPaint.setAntiAlias(true);
         linePaint = new Paint();
-        linePaint.setColor(Color.GREEN);
+        linePaint.setColor(Color.BLUE);
         linePaint.setStyle(Paint.Style.STROKE);
         linePaint.setStrokeWidth(2f);
         widthScaleFactor = canvas.getWidth() / (fbImage.getBitmap().getWidth() * 1.0f);
@@ -97,25 +123,87 @@ public class MLKitFacesAnalyzer implements ImageAnalysis.Analyzer {
 
     private void processFaces(List<FirebaseVisionFace> faces) {
         for (FirebaseVisionFace face : faces) {
-            drawContours(face.getContour(FirebaseVisionFaceContour.FACE).getPoints());
-            drawContours(face.getContour(FirebaseVisionFaceContour.LEFT_EYEBROW_BOTTOM).getPoints());
-            drawContours(face.getContour(FirebaseVisionFaceContour.RIGHT_EYEBROW_BOTTOM).getPoints());
-            drawContours(face.getContour(FirebaseVisionFaceContour.LEFT_EYE).getPoints());
-            drawContours(face.getContour(FirebaseVisionFaceContour.RIGHT_EYE).getPoints());
-            drawContours(face.getContour(FirebaseVisionFaceContour.LEFT_EYEBROW_TOP).getPoints());
-            drawContours(face.getContour(FirebaseVisionFaceContour.RIGHT_EYEBROW_TOP).getPoints());
-            drawContours(face.getContour(FirebaseVisionFaceContour.LOWER_LIP_BOTTOM).getPoints());
-            drawContours(face.getContour(FirebaseVisionFaceContour.LOWER_LIP_TOP).getPoints());
-            drawContours(face.getContour(FirebaseVisionFaceContour.UPPER_LIP_BOTTOM).getPoints());
-            drawContours(face.getContour(FirebaseVisionFaceContour.UPPER_LIP_TOP).getPoints());
-            drawContours(face.getContour(FirebaseVisionFaceContour.NOSE_BRIDGE).getPoints());
-            drawContours(face.getContour(FirebaseVisionFaceContour.NOSE_BOTTOM).getPoints());
+            drawContours(face.getContour(FACE).getPoints(), FACE);
+            drawContours(face.getContour(NOSE_BRIDGE).getPoints(), NOSE_BRIDGE);
+            drawContours(face.getContour(LOWER_LIP_BOTTOM).getPoints(), LOWER_LIP_BOTTOM);
+            drawContours(face.getContour(LOWER_LIP_TOP).getPoints(), LOWER_LIP_TOP);
+            drawContours(face.getContour(UPPER_LIP_BOTTOM).getPoints(), UPPER_LIP_BOTTOM);
+            drawContours(face.getContour(FirebaseVisionFaceContour.LEFT_EYEBROW_BOTTOM).getPoints(), 0);
+            drawContours(face.getContour(FirebaseVisionFaceContour.RIGHT_EYEBROW_BOTTOM).getPoints(), 0);
+            drawContours(face.getContour(FirebaseVisionFaceContour.LEFT_EYE).getPoints(), 0);
+            drawContours(face.getContour(FirebaseVisionFaceContour.RIGHT_EYE).getPoints(), 0);
+            drawContours(face.getContour(FirebaseVisionFaceContour.LEFT_EYEBROW_TOP).getPoints(), 0);
+            drawContours(face.getContour(FirebaseVisionFaceContour.RIGHT_EYEBROW_TOP).getPoints(), 0);
+            drawContours(face.getContour(FirebaseVisionFaceContour.UPPER_LIP_TOP).getPoints(), 0);
+            drawContours(face.getContour(FirebaseVisionFaceContour.NOSE_BOTTOM).getPoints(), 0);
         }
         iv.setImageBitmap(bitmap);
     }
 
-    private void drawContours(List<FirebaseVisionPoint> points) {
+    private void drawContours(List<FirebaseVisionPoint> points, int face) {
         int counter = 0;
+
+        //搖頭
+        if (face == FACE) {
+            rightFace = points.get(27).getX();
+            leftFace = points.get(9).getX();
+        }
+        if (face == NOSE_BRIDGE) {
+            nose = points.get(1).getX();
+        }
+        if ((nose - rightFace) / (leftFace - nose) > 5) {
+            ++turnLeft;
+        } else if ((leftFace - nose) / (nose - rightFace) > 5) {
+            ++turnRight;
+        }
+        if (turnRight > 1 && turnLeft > 1) {
+            ToastUtils.showShort("搖頭");
+            turnRight = 0;
+            turnLeft = 0;
+        }
+
+        //點頭
+        if (face == FACE) {
+            midFace = points.get(9).getY();
+            bottomFace = points.get(18).getY();
+            topFace = points.get(0).getY();
+            Paint paint = new Paint();
+            paint.setColor(Color.BLUE);
+            paint.setTextSize(50f);
+        }
+
+        if ((midFace - topFace) / (bottomFace - midFace) > 1.23) {
+            ++turnTop;
+        } else if ((midFace - topFace) / (bottomFace - midFace) < 0.88) {
+            ++turnBottom;
+        }
+        if (turnTop > 1 && turnBottom > 1) {
+            ToastUtils.showShort("點頭");
+            turnTop = 0;
+            turnBottom = 0;
+        }
+
+        //張嘴
+        if (face == UPPER_LIP_BOTTOM) {
+            upBottomLip = points.get(4).getY();
+        }
+        if (face == LOWER_LIP_TOP) {
+            LowTopLip = points.get(4).getY();
+        }
+        if (LowTopLip - upBottomLip > 15) {
+            myList.add(LowTopLip - upBottomLip);
+        } else {
+            myList.clear();
+        }
+        if (myList.size() > 10) {
+            ToastUtils.showShort("張嘴");
+            myList.clear();
+        }
+
+
+
+
+
         for (FirebaseVisionPoint point : points) {
             if (counter != points.size() - 1) {
                 canvas.drawLine(translateX(point.getX()),
@@ -123,6 +211,8 @@ public class MLKitFacesAnalyzer implements ImageAnalysis.Analyzer {
                         translateX(points.get(counter + 1).getX()),
                         translateY(points.get(counter + 1).getY()),
                         linePaint);
+
+
             } else {
                 canvas.drawLine(translateX(point.getX()),
                         translateY(point.getY()),
