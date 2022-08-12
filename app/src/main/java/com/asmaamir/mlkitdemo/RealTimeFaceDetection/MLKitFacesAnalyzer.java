@@ -9,6 +9,7 @@ import android.util.Log;
 import android.view.TextureView;
 import android.widget.ImageView;
 
+import androidx.annotation.NonNull;
 import androidx.camera.core.CameraX;
 import androidx.camera.core.ImageAnalysis;
 import androidx.camera.core.ImageProxy;
@@ -26,11 +27,7 @@ import com.google.firebase.ml.vision.face.FirebaseVisionFaceDetectorOptions;
 import java.util.ArrayList;
 import java.util.List;
 
-import static com.google.firebase.ml.vision.face.FirebaseVisionFaceContour.FACE;
-import static com.google.firebase.ml.vision.face.FirebaseVisionFaceContour.LOWER_LIP_BOTTOM;
-import static com.google.firebase.ml.vision.face.FirebaseVisionFaceContour.LOWER_LIP_TOP;
-import static com.google.firebase.ml.vision.face.FirebaseVisionFaceContour.NOSE_BRIDGE;
-import static com.google.firebase.ml.vision.face.FirebaseVisionFaceContour.UPPER_LIP_BOTTOM;
+import static com.google.firebase.ml.vision.face.FirebaseVisionFaceContour.*;
 
 public class MLKitFacesAnalyzer implements ImageAnalysis.Analyzer {
     private static final String TAG = "MLKitFacesAnalyzer";
@@ -43,7 +40,6 @@ public class MLKitFacesAnalyzer implements ImageAnalysis.Analyzer {
     private float widthScaleFactor = 1.0f;
     private float heightScaleFactor = 1.0f;
     private FirebaseVisionImage fbImage;
-    private CameraX.LensFacing lens;
     //搖頭
     float rightFace = 0;
     float leftFace = 0;
@@ -53,15 +49,17 @@ public class MLKitFacesAnalyzer implements ImageAnalysis.Analyzer {
     //張嘴
     float upBottomLip = 0;
     float LowTopLip = 0;
+    //微笑
+    float upTopLipLeft = 0;
+    float upTopLipRight = 0;
     //點頭
     float midFace = 0;
     float topFace = 0;
     float bottomFace = 0;
     float turnTop = 0;
     float turnBottom = 0;
-
+    private CameraX.LensFacing lens;
     List<Float> myList = new ArrayList<>();
-
 
     MLKitFacesAnalyzer(TextureView tv, ImageView iv, CameraX.LensFacing lens) {
         this.tv = tv;
@@ -74,7 +72,9 @@ public class MLKitFacesAnalyzer implements ImageAnalysis.Analyzer {
         if (image == null || image.getImage() == null) {
             return;
         }
+
         int rotation = degreesToFirebaseRotation(rotationDegrees);
+
         fbImage = FirebaseVisionImage.fromMediaImage(image.getImage(), rotation);
         initDrawingUtils();
 
@@ -88,29 +88,29 @@ public class MLKitFacesAnalyzer implements ImageAnalysis.Analyzer {
         dotPaint = new Paint();
         dotPaint.setColor(Color.YELLOW);
         dotPaint.setStyle(Paint.Style.FILL);
-        dotPaint.setStrokeWidth(2f);
+        dotPaint.setStrokeWidth(4f);
         dotPaint.setAntiAlias(true);
         linePaint = new Paint();
         linePaint.setColor(Color.BLUE);
         linePaint.setStyle(Paint.Style.STROKE);
-        linePaint.setStrokeWidth(2f);
+        linePaint.setStrokeWidth(4f);
         widthScaleFactor = canvas.getWidth() / (fbImage.getBitmap().getWidth() * 1.0f);
         heightScaleFactor = canvas.getHeight() / (fbImage.getBitmap().getHeight() * 1.0f);
     }
 
     private void initDetector() {
-        FirebaseVisionFaceDetectorOptions detectorOptions = new FirebaseVisionFaceDetectorOptions
-                .Builder()
+        FirebaseVisionFaceDetectorOptions detectorOptions = new FirebaseVisionFaceDetectorOptions.Builder()
                 .setContourMode(FirebaseVisionFaceDetectorOptions.ALL_CONTOURS)
                 .build();
+
+
         faceDetector = FirebaseVision
                 .getInstance()
                 .getVisionFaceDetector(detectorOptions);
     }
 
     private void detectFaces() {
-        faceDetector
-                .detectInImage(fbImage)
+        faceDetector.detectInImage(fbImage)
                 .addOnSuccessListener(firebaseVisionFaces -> {
                     if (!firebaseVisionFaces.isEmpty()) {
                         processFaces(firebaseVisionFaces);
@@ -125,17 +125,18 @@ public class MLKitFacesAnalyzer implements ImageAnalysis.Analyzer {
         for (FirebaseVisionFace face : faces) {
             drawContours(face.getContour(FACE).getPoints(), FACE);
             drawContours(face.getContour(NOSE_BRIDGE).getPoints(), NOSE_BRIDGE);
-            drawContours(face.getContour(LOWER_LIP_BOTTOM).getPoints(), LOWER_LIP_BOTTOM);
             drawContours(face.getContour(LOWER_LIP_TOP).getPoints(), LOWER_LIP_TOP);
+            drawContours(face.getContour(UPPER_LIP_TOP).getPoints(), UPPER_LIP_TOP);
             drawContours(face.getContour(UPPER_LIP_BOTTOM).getPoints(), UPPER_LIP_BOTTOM);
-            drawContours(face.getContour(FirebaseVisionFaceContour.LEFT_EYEBROW_BOTTOM).getPoints(), 0);
-            drawContours(face.getContour(FirebaseVisionFaceContour.RIGHT_EYEBROW_BOTTOM).getPoints(), 0);
-            drawContours(face.getContour(FirebaseVisionFaceContour.LEFT_EYE).getPoints(), 0);
-            drawContours(face.getContour(FirebaseVisionFaceContour.RIGHT_EYE).getPoints(), 0);
-            drawContours(face.getContour(FirebaseVisionFaceContour.LEFT_EYEBROW_TOP).getPoints(), 0);
-            drawContours(face.getContour(FirebaseVisionFaceContour.RIGHT_EYEBROW_TOP).getPoints(), 0);
-            drawContours(face.getContour(FirebaseVisionFaceContour.UPPER_LIP_TOP).getPoints(), 0);
-            drawContours(face.getContour(FirebaseVisionFaceContour.NOSE_BOTTOM).getPoints(), 0);
+//            drawContours(face.getContour(LOWER_LIP_BOTTOM).getPoints(), 0);
+//            drawContours(face.getContour(LEFT_EYEBROW_BOTTOM).getPoints(), 0);
+//            drawContours(face.getContour(RIGHT_EYEBROW_BOTTOM).getPoints(), 0);
+//            drawContours(face.getContour(LEFT_EYE).getPoints(), 0);
+//            drawContours(face.getContour(RIGHT_EYE).getPoints(), 0);
+//            drawContours(face.getContour(LEFT_EYEBROW_TOP).getPoints(), 0);
+//            drawContours(face.getContour(RIGHT_EYEBROW_TOP).getPoints(), 0);
+//            drawContours(face.getContour(UPPER_LIP_TOP).getPoints(), 0);
+//            drawContours(face.getContour(NOSE_BOTTOM).getPoints(), 0);
         }
         iv.setImageBitmap(bitmap);
     }
@@ -148,9 +149,11 @@ public class MLKitFacesAnalyzer implements ImageAnalysis.Analyzer {
             rightFace = points.get(27).getX();
             leftFace = points.get(9).getX();
         }
+
         if (face == NOSE_BRIDGE) {
             nose = points.get(1).getX();
         }
+
         if ((nose - rightFace) / (leftFace - nose) > 5) {
             ++turnLeft;
         } else if ((leftFace - nose) / (nose - rightFace) > 5) {
@@ -184,25 +187,42 @@ public class MLKitFacesAnalyzer implements ImageAnalysis.Analyzer {
         }
 
         //張嘴
-        if (face == UPPER_LIP_BOTTOM) {
-            upBottomLip = points.get(4).getY();
+//        if (face == UPPER_LIP_BOTTOM) {
+//            upBottomLip = points.get(4).getY();
+//        }
+//        if (face == LOWER_LIP_TOP) {
+//            LowTopLip = points.get(4).getY();
+//        }
+//        if (LowTopLip - upBottomLip > 15) {
+//            myList.add(LowTopLip - upBottomLip);
+//        } else {
+//            myList.clear();
+//        }
+//        if (myList.size() > 10) {
+//            ToastUtils.showShort("張嘴");
+//            myList.clear();
+//        }
+
+        //微笑
+        if (face == UPPER_LIP_TOP) {
+            upTopLipLeft = points.get(0).getY();
+            upTopLipRight = points.get(10).getY();
         }
-        if (face == LOWER_LIP_TOP) {
-            LowTopLip = points.get(4).getY();
+
+        if (face == NOSE_BRIDGE) {
+            nose = points.get(1).getY();
         }
-        if (LowTopLip - upBottomLip > 15) {
-            myList.add(LowTopLip - upBottomLip);
+
+        if (upTopLipLeft - nose < 30 && upTopLipRight - nose < 30) {
+            myList.add(upTopLipLeft - nose);
         } else {
             myList.clear();
         }
-        if (myList.size() > 10) {
-            ToastUtils.showShort("張嘴");
+
+        if (myList.size() > 30) {
+            ToastUtils.showShort("微笑");
             myList.clear();
         }
-
-
-
-
 
         for (FirebaseVisionPoint point : points) {
             if (counter != points.size() - 1) {
@@ -252,5 +272,4 @@ public class MLKitFacesAnalyzer implements ImageAnalysis.Analyzer {
                 throw new IllegalArgumentException("Rotation must be 0, 90, 180, or 270.");
         }
     }
-
 }

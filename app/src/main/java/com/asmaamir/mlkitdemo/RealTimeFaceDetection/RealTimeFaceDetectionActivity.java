@@ -50,20 +50,6 @@ public class RealTimeFaceDetectionActivity extends AppCompatActivity {
     @SuppressLint("RestrictedApi")
     private void startCamera() {
         initCamera();
-        ImageButton ibSwitch = findViewById(R.id.btn_switch_face);
-        ibSwitch.setOnClickListener(v -> {
-            if (lens == CameraX.LensFacing.FRONT)
-                lens = CameraX.LensFacing.BACK;
-            else
-                lens = CameraX.LensFacing.FRONT;
-            try {
-                Log.i(TAG, "" + lens);
-                CameraX.getCameraWithLensFacing(lens);
-                initCamera();
-            } catch (CameraInfoUnavailableException e) {
-                Log.e(TAG, e.toString());
-            }
-        });
     }
 
     private void initCamera() {
